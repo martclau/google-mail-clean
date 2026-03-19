@@ -32,6 +32,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ "$YEARS_SET" == "true" && ! "$YEARS" =~ ^[0-9]+$ ]]; then
+  echo "Error: --years requires a positive integer (got: '$YEARS')"
+  exit 1
+fi
+
 # ── Build search query ───────────────────────────────────────────────────────
 # --all without --years: no age restriction, search everywhere
 # --all with --years: age restriction + search everywhere
@@ -50,7 +55,9 @@ else
 fi
 
 # ── Fetch all matching message IDs ───────────────────────────────────────────
-if [[ "$DRY_RUN" == "false" ]]; then
+if [[ "$DRY_RUN" == "true" ]]; then
+  echo "Counting emails (this may take a moment for large mailboxes)..."
+else
   echo "Searching for $DESCRIPTION..."
   echo "Fetching message IDs..."
 fi
@@ -100,11 +107,10 @@ delete_batch() {
   ids_json=$(printf '%s\n' "${BATCH[@]}" | jq -Rn '[inputs]')
 
   if [[ "$TRASH" == "true" ]]; then
-    for id in "${BATCH[@]}"; do
-      gws gmail users messages trash \
-        --params "{\"userId\": \"me\", \"id\": \"$id\"}" \
-        --format json > /dev/null 2>&1
-    done
+    gws gmail users messages batchModify \
+      --params '{"userId": "me"}' \
+      --json "{\"ids\": $ids_json, \"addLabelIds\": [\"TRASH\"], \"removeLabelIds\": [\"INBOX\"]}" \
+      --format json > /dev/null 2>&1
   else
     gws gmail users messages batchDelete \
       --params '{"userId": "me"}' \
