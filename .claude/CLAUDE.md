@@ -13,7 +13,9 @@ Bash scripts for cleaning up Gmail using the [`gws`](https://github.com/googlewo
 Bulk-deletes Gmail messages older than N years using `batchDelete` (up to 1000 IDs per request).
 - Default: emails older than 10 years, inbox/sent/labels only
 - `--all` removes the age filter and adds `in:anywhere` to search all folders
-- `--trash` uses `messages.trash` one-by-one (no batch trash API exists)
+- `--trash` uses `messages.batchModify` (adds `TRASH` label, removes `INBOX`; up to 1000 per call)
+- `--years` validates input is a positive integer; exits with error otherwise
+- `--dry-run` prints "Counting emails..." while fetching IDs (can be slow for large mailboxes)
 - Always requires typing `YES` to confirm before deleting (skipped with `--dry-run`)
 
 ### `find-senders.sh`
@@ -26,5 +28,6 @@ Audits unique sender addresses by fetching only the `From` header (`format=metad
 
 - `messages.list` searches inbox/sent/labels by default; add `in:anywhere` to include trash and spam
 - `messages.batchDelete` permanently deletes up to 1000 messages per call — irreversible
+- `messages.batchModify` moves up to 1000 messages to trash per call (add `TRASH`, remove `INBOX`)
 - `format=metadata&metadataHeaders=From` is the efficient way to fetch only the From header
 - Pagination: use `--page-all --page-limit 1000` to retrieve all results

@@ -25,8 +25,8 @@ Permanently deletes (or trashes) Gmail messages older than a given number of yea
 | `--years N` | `10` | Delete emails older than N years |
 | `--all` | — | No age limit; searches all folders (inbox, sent, drafts, trash, spam, labels) |
 | `--all --years N` | — | Older than N years, across all folders |
-| `--trash` | — | Move to trash instead of permanent delete |
-| `--dry-run` | — | Preview count only, no deletions |
+| `--trash` | — | Move to trash instead of permanent delete (uses `batchModify`, up to 1000 per call) |
+| `--dry-run` | — | Preview count only, no deletions (fetches all IDs; prints progress while counting) |
 
 **Examples:**
 
@@ -52,6 +52,8 @@ Permanently deletes (or trashes) Gmail messages older than a given number of yea
 ```
 
 > **Warning:** Without `--trash`, deletion is permanent and cannot be undone. Always run with `--dry-run` first.
+
+> **Note:** `--years` requires a positive integer (e.g. `--years 5`). Passing a non-integer value or omitting the number exits with an error.
 
 ---
 
