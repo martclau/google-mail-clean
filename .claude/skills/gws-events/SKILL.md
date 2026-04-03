@@ -1,12 +1,13 @@
 ---
 name: gws-events
-version: 1.0.0
 description: "Subscribe to Google Workspace events."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "productivity"
     requires:
-      bins: ["gws"]
+      bins:
+        - gws
     cliHelp: "gws events --help"
 ---
 

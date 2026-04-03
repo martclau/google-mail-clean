@@ -22,11 +22,11 @@ Permanently deletes (or trashes) Gmail messages older than a given number of yea
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--years N` | `10` | Delete emails older than N years |
-| `--all` | — | No age limit; searches all folders (inbox, sent, drafts, trash, spam, labels) |
+| `--years N` | `10` | Delete emails older than N years (must be ≥ 1) |
+| `--all` | — | No age limit; searches all folders including trash and spam |
 | `--all --years N` | — | Older than N years, across all folders |
 | `--trash` | — | Move to trash instead of permanent delete (uses `batchModify`, up to 1000 per call) |
-| `--dry-run` | — | Preview count only, no deletions (fetches all IDs; prints progress while counting) |
+| `--dry-run` | — | Preview count only, no deletions |
 
 **Examples:**
 
@@ -53,7 +53,7 @@ Permanently deletes (or trashes) Gmail messages older than a given number of yea
 
 > **Warning:** Without `--trash`, deletion is permanent and cannot be undone. Always run with `--dry-run` first.
 
-> **Note:** `--years` requires a positive integer (e.g. `--years 5`). Passing a non-integer value or omitting the number exits with an error.
+> **Note:** `--years` requires a positive integer ≥ 1 (e.g. `--years 5`). Passing zero, a non-integer, or omitting the number exits with an error. API errors (expired auth, quota) are surfaced — the script exits non-zero if any batch fails.
 
 ---
 
@@ -68,9 +68,9 @@ Lists all unique sender email addresses in your mailbox, with an optional age fi
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--years N` | — | Only emails older than N years |
-| `--all` | — | Include all folders (trash, spam, drafts, etc.) |
+| `--all` | — | Include all folders including trash and spam |
 | `--count` | — | Show email count per sender, sorted by most frequent |
-| `--parallel N` | `10` | Number of parallel API requests |
+| `--parallel N` | `10` | Number of parallel API requests (must be ≥ 1) |
 
 **Examples:**
 

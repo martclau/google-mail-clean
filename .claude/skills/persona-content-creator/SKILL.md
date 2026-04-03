@@ -1,13 +1,19 @@
 ---
 name: persona-content-creator
-version: 1.0.0
 description: "Create, organize, and distribute content across Workspace."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "persona"
     requires:
-      bins: ["gws"]
-      skills: ["gws-docs", "gws-drive", "gws-gmail", "gws-chat", "gws-slides"]
+      bins:
+        - gws
+      skills:
+        - gws-docs
+        - gws-drive
+        - gws-gmail
+        - gws-chat
+        - gws-slides
 ---
 
 # Content Creator

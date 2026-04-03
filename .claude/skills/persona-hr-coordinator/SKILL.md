@@ -1,13 +1,18 @@
 ---
 name: persona-hr-coordinator
-version: 1.0.0
 description: "Handle HR workflows — onboarding, announcements, and employee comms."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "persona"
     requires:
-      bins: ["gws"]
-      skills: ["gws-gmail", "gws-calendar", "gws-drive", "gws-chat"]
+      bins:
+        - gws
+      skills:
+        - gws-gmail
+        - gws-calendar
+        - gws-drive
+        - gws-chat
 ---
 
 # HR Coordinator

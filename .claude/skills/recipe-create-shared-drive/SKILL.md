@@ -1,14 +1,16 @@
 ---
 name: recipe-create-shared-drive
-version: 1.0.0
 description: "Create a Google Shared Drive and add members with appropriate roles."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "recipe"
     domain: "productivity"
     requires:
-      bins: ["gws"]
-      skills: ["gws-drive"]
+      bins:
+        - gws
+      skills:
+        - gws-drive
 ---
 
 # Create and Configure a Shared Drive

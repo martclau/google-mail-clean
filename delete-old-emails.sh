@@ -28,11 +28,33 @@ while [[ $# -gt 0 ]]; do
     --trash)   TRASH=true; shift ;;
     --all)     ALL=true; shift ;;
     --dry-run) DRY_RUN=true; shift ;;
+    --help|-h)
+      cat <<'EOF'
+Usage: delete-old-emails.sh [OPTIONS]
+
+Bulk-delete Gmail messages older than N years.
+
+Options:
+  --years N    Delete emails older than N years (default: 10)
+  --all        Include all folders (trash, spam, drafts, labels);
+               without --years, removes the age filter entirely
+  --trash      Move to trash instead of permanently deleting
+  --dry-run    Count matching emails without deleting
+  --help, -h   Show this help message
+
+Examples:
+  ./delete-old-emails.sh                  # permanently delete emails >10 years old
+  ./delete-old-emails.sh --years 5        # permanently delete emails >5 years old
+  ./delete-old-emails.sh --all            # permanently delete ALL emails everywhere
+  ./delete-old-emails.sh --trash --years 3  # trash emails >3 years old
+  ./delete-old-emails.sh --dry-run        # preview count only
+EOF
+      exit 0 ;;
     *) echo "Unknown flag: $1"; exit 1 ;;
   esac
 done
 
-if [[ "$YEARS_SET" == "true" && ! "$YEARS" =~ ^[0-9]+$ ]]; then
+if [[ "$YEARS_SET" == "true" && ! "$YEARS" =~ ^[1-9][0-9]*$ ]]; then
   echo "Error: --years requires a positive integer (got: '$YEARS')"
   exit 1
 fi
@@ -62,14 +84,21 @@ else
   echo "Fetching message IDs..."
 fi
 
-IDS=$(
+LIST_PARAMS="{\"userId\": \"me\", \"q\": \"$QUERY\", \"maxResults\": 500"
+[[ "$ALL" == "true" ]] && LIST_PARAMS="$LIST_PARAMS, \"includeSpamTrash\": true"
+LIST_PARAMS="$LIST_PARAMS}"
+
+LIST_STDERR=$(mktemp)
+LIST_OUTPUT=$(
   gws gmail users messages list \
     --page-all \
     --page-limit 1000 \
-    --params "{\"userId\": \"me\", \"q\": \"$QUERY\", \"maxResults\": 500}" \
-    2>/dev/null \
-  | jq -r '.messages[]?.id' 2>/dev/null
-)
+    --params "$LIST_PARAMS" \
+    2>"$LIST_STDERR"
+) || { cat "$LIST_STDERR" >&2; echo "Error fetching messages."; rm -f "$LIST_STDERR"; exit 1; }
+rm -f "$LIST_STDERR"
+
+IDS=$(echo "$LIST_OUTPUT" | jq -r '.messages[]?.id' 2>/dev/null)
 
 TOTAL=$(echo "$IDS" | grep -c . || true)
 
@@ -100,25 +129,36 @@ fi
 
 # ── Delete in batches ────────────────────────────────────────────────────────
 DELETED=0
+FAILED=0
 BATCH=()
 
 delete_batch() {
-  local ids_json
+  local ids_json batch_output batch_size
   ids_json=$(printf '%s\n' "${BATCH[@]}" | jq -Rn '[inputs]')
+  batch_size=${#BATCH[@]}
 
+  local rc=0
   if [[ "$TRASH" == "true" ]]; then
-    gws gmail users messages batchModify \
+    batch_output=$(gws gmail users messages batchModify \
       --params '{"userId": "me"}' \
       --json "{\"ids\": $ids_json, \"addLabelIds\": [\"TRASH\"], \"removeLabelIds\": [\"INBOX\"]}" \
-      --format json > /dev/null 2>&1
+      --format json 2>/dev/null) || rc=$?
   else
-    gws gmail users messages batchDelete \
+    # batchDelete: Gmail API documents a 1000-ID limit for batchModify;
+    # batchDelete has no documented limit but we use the same cap to be safe.
+    batch_output=$(gws gmail users messages batchDelete \
       --params '{"userId": "me"}' \
       --json "{\"ids\": $ids_json}" \
-      --format json > /dev/null 2>&1
+      --format json 2>/dev/null) || rc=$?
   fi
 
-  DELETED=$((DELETED + ${#BATCH[@]}))
+  if [[ $rc -ne 0 ]]; then
+    echo "Warning: batch failed ($batch_size messages): $batch_output" >&2
+    FAILED=$((FAILED + batch_size))
+  else
+    DELETED=$((DELETED + batch_size))
+  fi
+
   echo "Progress: $DELETED / $TOTAL deleted..."
   BATCH=()
 }
@@ -136,4 +176,9 @@ if [[ ${#BATCH[@]} -gt 0 ]]; then
 fi
 
 echo ""
-echo "Done. $DELETED emails $ACTION."
+if [[ $FAILED -gt 0 ]]; then
+  echo "Done. $DELETED emails $ACTION. $FAILED emails failed." >&2
+  exit 1
+else
+  echo "Done. $DELETED emails $ACTION."
+fi

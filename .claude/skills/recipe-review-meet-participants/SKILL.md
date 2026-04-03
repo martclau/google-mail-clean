@@ -1,14 +1,16 @@
 ---
 name: recipe-review-meet-participants
-version: 1.0.0
 description: "Review who attended a Google Meet conference and for how long."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "recipe"
     domain: "productivity"
     requires:
-      bins: ["gws"]
-      skills: ["gws-meet"]
+      bins:
+        - gws
+      skills:
+        - gws-meet
 ---
 
 # Review Google Meet Attendance

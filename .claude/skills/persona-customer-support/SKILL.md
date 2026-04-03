@@ -1,13 +1,18 @@
 ---
 name: persona-customer-support
-version: 1.0.0
 description: "Manage customer support — track tickets, respond, escalate issues."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "persona"
     requires:
-      bins: ["gws"]
-      skills: ["gws-gmail", "gws-sheets", "gws-chat", "gws-calendar"]
+      bins:
+        - gws
+      skills:
+        - gws-gmail
+        - gws-sheets
+        - gws-chat
+        - gws-calendar
 ---
 
 # Customer Support Agent

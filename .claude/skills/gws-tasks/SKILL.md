@@ -1,12 +1,13 @@
 ---
 name: gws-tasks
-version: 1.0.0
 description: "Google Tasks: Manage task lists and tasks."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "productivity"
     requires:
-      bins: ["gws"]
+      bins:
+        - gws
     cliHelp: "gws tasks --help"
 ---
 

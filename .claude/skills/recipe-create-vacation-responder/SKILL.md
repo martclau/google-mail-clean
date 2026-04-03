@@ -1,14 +1,16 @@
 ---
 name: recipe-create-vacation-responder
-version: 1.0.0
 description: "Enable a Gmail out-of-office auto-reply with a custom message and date range."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "recipe"
     domain: "productivity"
     requires:
-      bins: ["gws"]
-      skills: ["gws-gmail"]
+      bins:
+        - gws
+      skills:
+        - gws-gmail
 ---
 
 # Set Up a Gmail Vacation Responder

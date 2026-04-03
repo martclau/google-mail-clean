@@ -1,14 +1,16 @@
 ---
 name: recipe-forward-labeled-emails
-version: 1.0.0
 description: "Find Gmail messages with a specific label and forward them to another address."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "recipe"
     domain: "productivity"
     requires:
-      bins: ["gws"]
-      skills: ["gws-gmail"]
+      bins:
+        - gws
+      skills:
+        - gws-gmail
 ---
 
 # Forward Labeled Gmail Messages

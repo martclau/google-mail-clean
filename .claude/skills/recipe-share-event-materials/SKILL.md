@@ -1,14 +1,17 @@
 ---
 name: recipe-share-event-materials
-version: 1.0.0
 description: "Share Google Drive files with all attendees of a Google Calendar event."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "recipe"
     domain: "productivity"
     requires:
-      bins: ["gws"]
-      skills: ["gws-calendar", "gws-drive"]
+      bins:
+        - gws
+      skills:
+        - gws-calendar
+        - gws-drive
 ---
 
 # Share Files with Meeting Attendees

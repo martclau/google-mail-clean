@@ -1,12 +1,13 @@
 ---
 name: gws-gmail-reply-all
-version: 1.0.0
 description: "Gmail: Reply-all to a message (handles threading automatically)."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "productivity"
     requires:
-      bins: ["gws"]
+      bins:
+        - gws
     cliHelp: "gws gmail +reply-all --help"
 ---
 
@@ -35,6 +36,7 @@ gws gmail +reply-all --message-id <ID> --body <TEXT>
 | `--bcc` | — | — | BCC email address(es), comma-separated |
 | `--html` | — | — | Treat --body as HTML content (default is plain text) |
 | `--dry-run` | — | — | Show the request that would be sent without executing it |
+| `--draft` | — | — | Save as draft instead of sending |
 | `--remove` | — | — | Exclude recipients from the outgoing reply (comma-separated emails) |
 
 ## Examples
@@ -45,6 +47,7 @@ gws gmail +reply-all --message-id 18f1a2b3c4d --body 'Updated' --remove bob@exam
 gws gmail +reply-all --message-id 18f1a2b3c4d --body 'Adding Eve' --cc eve@example.com
 gws gmail +reply-all --message-id 18f1a2b3c4d --body '<i>Noted</i>' --html
 gws gmail +reply-all --message-id 18f1a2b3c4d --body 'Notes attached' -a notes.pdf
+gws gmail +reply-all --message-id 18f1a2b3c4d --body 'Draft reply' --draft
 ```
 
 ## Tips
@@ -57,7 +60,8 @@ gws gmail +reply-all --message-id 18f1a2b3c4d --body 'Notes attached' -a notes.p
 - The command fails if no To recipient remains after exclusions and --to additions.
 - Use -a/--attach to add file attachments. Can be specified multiple times.
 - With --html, the quoted block uses Gmail's gmail_quote CSS classes and preserves HTML formatting. Use fragment tags (<p>, <b>, <a>, etc.) — no <html>/<body> wrapper needed.
-- With --html, inline images in the quoted message (cid: references) will appear broken. Externally hosted images are unaffected.
+- With --html, inline images in the quoted message are preserved via cid: references.
+- Use --draft to save the reply as a draft instead of sending it immediately.
 
 ## See Also
 

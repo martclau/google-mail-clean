@@ -1,12 +1,13 @@
 ---
 name: gws-admin-reports
-version: 1.0.0
 description: "Google Workspace Admin SDK: Audit logs and usage reports."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "productivity"
     requires:
-      bins: ["gws"]
+      bins:
+        - gws
     cliHelp: "gws admin-reports --help"
 ---
 

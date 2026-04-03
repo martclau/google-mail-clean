@@ -26,9 +26,34 @@ while [[ $# -gt 0 ]]; do
     --all)      ALL=true; shift ;;
     --count)    COUNT=true; shift ;;
     --parallel) PARALLEL="$2"; shift 2 ;;
+    --help|-h)
+      cat <<'EOF'
+Usage: find-senders.sh [OPTIONS]
+
+List unique sender email addresses from Gmail messages.
+
+Options:
+  --years N      Only include emails older than N years
+  --all          Include all folders (trash, spam, drafts, labels)
+  --count        Show occurrence count per sender, sorted by frequency
+  --parallel N   Number of parallel API requests (default: 10)
+  --help, -h     Show this help message
+
+Examples:
+  ./find-senders.sh                        # unique senders in inbox/sent/labels
+  ./find-senders.sh --count                # senders ranked by email count
+  ./find-senders.sh --years 5 --all        # senders of emails >5 years old, all folders
+  ./find-senders.sh --count --parallel 20  # faster fetching with 20 parallel requests
+EOF
+      exit 0 ;;
     *) echo "Unknown flag: $1"; exit 1 ;;
   esac
 done
+
+if [[ ! "$PARALLEL" =~ ^[1-9][0-9]*$ ]]; then
+  echo "Error: --parallel requires a positive integer (got: '$PARALLEL')"
+  exit 1
+fi
 
 # ── Build search query ───────────────────────────────────────────────────────
 QUERY=""
@@ -41,17 +66,21 @@ fi
 # ── Fetch all message IDs ────────────────────────────────────────────────────
 PARAMS="{\"userId\": \"me\", \"maxResults\": 500"
 [[ -n "$QUERY" ]] && PARAMS="$PARAMS, \"q\": \"$QUERY\""
+[[ "$ALL" == "true" ]] && PARAMS="$PARAMS, \"includeSpamTrash\": true"
 PARAMS="$PARAMS}"
 
 >&2 echo "Fetching message IDs..."
-IDS=$(
+LIST_STDERR=$(mktemp)
+LIST_OUTPUT=$(
   gws gmail users messages list \
     --page-all \
     --page-limit 1000 \
     --params "$PARAMS" \
-    2>/dev/null \
-  | jq -r '.messages[]?.id' 2>/dev/null
-)
+    2>"$LIST_STDERR"
+) || { cat "$LIST_STDERR" >&2; echo "Error fetching messages." >&2; rm -f "$LIST_STDERR"; exit 1; }
+rm -f "$LIST_STDERR"
+
+IDS=$(echo "$LIST_OUTPUT" | jq -r '.messages[]?.id' 2>/dev/null)
 
 TOTAL=$(echo "$IDS" | grep -c . || true)
 
@@ -63,21 +92,37 @@ fi
 >&2 echo "Found $TOTAL emails. Fetching sender headers (parallel=$PARALLEL)..."
 
 # ── Fetch From header for each message in parallel ───────────────────────────
+PROGRESS_FILE=$(mktemp)
+trap 'rm -f "$PROGRESS_FILE"' EXIT
+
 fetch_sender() {
-  local id="$1"
-  gws gmail users messages get \
+  local id="$1" total="$2" progress_file="$3" output count
+  local rc=0
+  output=$(gws gmail users messages get \
     --params "{\"userId\": \"me\", \"id\": \"$id\", \"format\": \"metadata\", \"metadataHeaders\": \"From\"}" \
-    2>/dev/null \
-  | jq -r '.payload.headers[]? | select(.name == "From") | .value' 2>/dev/null
+    2>/dev/null) || rc=$?
+  if [[ $rc -ne 0 ]]; then
+    >&2 echo "Warning: failed to fetch message $id"
+    return
+  fi
+  echo "$output" | jq -r '.payload.headers[]? | select(.name == "From") | .value' 2>/dev/null
+
+  # Append a line per completion; wc -l counts total across all processes
+  echo . >> "$progress_file"
+  count=$(wc -l < "$progress_file")
+  if (( count % 100 == 0 )); then
+    >&2 echo "Progress: $count / $total fetched..."
+  fi
 }
 
 export -f fetch_sender
 
-SENDERS=$(echo "$IDS" | xargs -P "$PARALLEL" -I{} bash -c 'fetch_sender "$@"' _ {})
+SENDERS=$(echo "$IDS" | xargs -P "$PARALLEL" -I{} bash -c 'fetch_sender "$@"' _ {} "$TOTAL" "$PROGRESS_FILE")
+>&2 echo "Fetched all $TOTAL sender headers."
 
 # ── Extract email addresses and deduplicate ───────────────────────────────────
-# Handle both "Name <email>" and bare "email" formats
-EMAILS=$(echo "$SENDERS" | grep -oP '<\K[^>]+' || echo "$SENDERS" | grep -oP '\S+@\S+')
+# Handle both "Name <email>" and bare "email@domain" formats per-line
+EMAILS=$(echo "$SENDERS" | sed -n 's/.*<\([^>]*\)>.*/\1/p; t; s/.*\(\S\+@\S\+\).*/\1/p')
 
 if [[ "$COUNT" == "true" ]]; then
   echo "$EMAILS" | tr '[:upper:]' '[:lower:]' | sort | uniq -c | sort -rn | awk '{print $1, $2}'

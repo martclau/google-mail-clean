@@ -1,14 +1,16 @@
 ---
 name: recipe-bulk-download-folder
-version: 1.0.0
 description: "List and download all files from a Google Drive folder."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "recipe"
     domain: "productivity"
     requires:
-      bins: ["gws"]
-      skills: ["gws-drive"]
+      bins:
+        - gws
+      skills:
+        - gws-drive
 ---
 
 # Bulk Download Drive Folder

@@ -1,12 +1,13 @@
 ---
 name: gws-keep
-version: 1.0.0
 description: "Manage Google Keep notes."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "productivity"
     requires:
-      bins: ["gws"]
+      bins:
+        - gws
     cliHelp: "gws keep --help"
 ---
 

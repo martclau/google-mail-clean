@@ -1,12 +1,13 @@
 ---
 name: gws-modelarmor
-version: 1.0.0
 description: "Google Model Armor: Filter user-generated content for safety."
 metadata:
+  version: 0.22.5
   openclaw:
     category: "productivity"
     requires:
-      bins: ["gws"]
+      bins:
+        - gws
     cliHelp: "gws modelarmor --help"
 ---
 
